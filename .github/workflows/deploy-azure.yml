@@ -1,0 +1,189 @@
+name: Deploy PAC Hosting Server to Azure
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AZURE_RESOURCE_GROUP: pac-hosting-rg
+  AZURE_LOCATION: eastus
+  CONTAINER_NAME: pac-hosting-server
+  CONTAINERAPPS_ENVIRONMENT: pac-hosting-env
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests
+      run: |
+        # Start the server in background
+        npm start &
+        SERVER_PID=$!
+        
+        # Wait for server to start
+        sleep 5
+        
+        # Run tests
+        npm test
+        
+        # Stop the server
+        kill $SERVER_PID
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Create Resource Group
+      run: |
+        az group create --name $AZURE_RESOURCE_GROUP --location $AZURE_LOCATION
+    
+    - name: Create or Get ACR
+      run: |
+        # Check if ACR exists
+        ACR_EXISTS=$(az acr list --resource-group $AZURE_RESOURCE_GROUP --query "[?contains(name, 'pachostingacr')].name" --output tsv)
+        
+        if [ -z "$ACR_EXISTS" ]; then
+          # Create new ACR with timestamp
+          ACR_NAME="pachostingacr$(date +%s)"
+          az acr create --resource-group $AZURE_RESOURCE_GROUP --name $ACR_NAME --sku Basic --admin-enabled true
+        else
+          # Use existing ACR
+          ACR_NAME=$ACR_EXISTS
+        fi
+        
+        echo "ACR_NAME=$ACR_NAME" >> $GITHUB_ENV
+        
+        # Get ACR login server
+        ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --query loginServer --output tsv)
+        echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> $GITHUB_ENV
+    
+    - name: Build and Push Docker Image
+      run: |
+        # Login to ACR
+        az acr login --name $ACR_NAME
+        
+        # Build and push
+        docker build -t $ACR_LOGIN_SERVER/$CONTAINER_NAME:${{ github.sha }} .
+        docker build -t $ACR_LOGIN_SERVER/$CONTAINER_NAME:latest .
+        
+        docker push $ACR_LOGIN_SERVER/$CONTAINER_NAME:${{ github.sha }}
+        docker push $ACR_LOGIN_SERVER/$CONTAINER_NAME:latest
+    
+    - name: Install Container Apps Extension
+      run: |
+        az extension add --name containerapp --upgrade --yes
+    
+    - name: Create Container Apps Environment
+      run: |
+        # Check if environment exists
+        ENV_EXISTS=$(az containerapp env list --resource-group $AZURE_RESOURCE_GROUP --query "[?name=='$CONTAINERAPPS_ENVIRONMENT'].name" --output tsv)
+        
+        if [ -z "$ENV_EXISTS" ]; then
+          az containerapp env create \
+            --name $CONTAINERAPPS_ENVIRONMENT \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --location $AZURE_LOCATION
+        fi
+    
+    - name: Deploy to Container Apps
+      run: |
+        # Get ACR credentials
+        ACR_USERNAME=$(az acr credential show --name $ACR_NAME --query username --output tsv)
+        ACR_PASSWORD=$(az acr credential show --name $ACR_NAME --query passwords[0].value --output tsv)
+        
+        # Check if container app exists
+        APP_EXISTS=$(az containerapp list --resource-group $AZURE_RESOURCE_GROUP --query "[?name=='$CONTAINER_NAME'].name" --output tsv)
+        
+        if [ -z "$APP_EXISTS" ]; then
+          # Create new container app
+          az containerapp create \
+            --name $CONTAINER_NAME \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --environment $CONTAINERAPPS_ENVIRONMENT \
+            --image $ACR_LOGIN_SERVER/$CONTAINER_NAME:${{ github.sha }} \
+            --registry-server $ACR_LOGIN_SERVER \
+            --registry-username $ACR_USERNAME \
+            --registry-password $ACR_PASSWORD \
+            --target-port 3000 \
+            --ingress external \
+            --cpu 0.5 \
+            --memory 1Gi \
+            --min-replicas 1 \
+            --max-replicas 3 \
+            --env-vars NODE_ENV=production
+        else
+          # Update existing container app
+          az containerapp update \
+            --name $CONTAINER_NAME \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --image $ACR_LOGIN_SERVER/$CONTAINER_NAME:${{ github.sha }}
+        fi
+    
+    - name: Get Application URL
+      run: |
+        APP_URL=$(az containerapp show --name $CONTAINER_NAME --resource-group $AZURE_RESOURCE_GROUP --query properties.configuration.ingress.fqdn --output tsv)
+        echo "🎉 Application deployed successfully!"
+        echo "URL: https://$APP_URL"
+        echo "APP_URL=https://$APP_URL" >> $GITHUB_ENV
+    
+    - name: Test Deployment
+      run: |
+        # Wait for deployment to be ready
+        sleep 30
+        
+        # Test health endpoint
+        if curl -s "$APP_URL/health" | grep -q "healthy"; then
+          echo "✅ Health check passed!"
+        else
+          echo "❌ Health check failed!"
+          exit 1
+        fi
+        
+        # Test PAC endpoint
+        if curl -s "$APP_URL/12345678-1234-1234-1234-123456789012" | grep -q "FindProxyForURL"; then
+          echo "✅ PAC endpoint test passed!"
+        else
+          echo "❌ PAC endpoint test failed!"
+          exit 1
+        fi
+    
+    - name: Create Deployment Summary
+      run: |
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+        echo "- **Application URL**: $APP_URL" >> $GITHUB_STEP_SUMMARY
+        echo "- **Resource Group**: $AZURE_RESOURCE_GROUP" >> $GITHUB_STEP_SUMMARY
+        echo "- **Container Registry**: $ACR_NAME" >> $GITHUB_STEP_SUMMARY
+        echo "- **Image**: $ACR_LOGIN_SERVER/$CONTAINER_NAME:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🧪 Test Endpoints" >> $GITHUB_STEP_SUMMARY
+        echo "- Health: $APP_URL/health" >> $GITHUB_STEP_SUMMARY
+        echo "- PAC: $APP_URL/your-tenant-id" >> $GITHUB_STEP_SUMMARY
+        echo "- Beta Edge: $APP_URL/your-tenant-id?betaEdge=true" >> $GITHUB_STEP_SUMMARY
