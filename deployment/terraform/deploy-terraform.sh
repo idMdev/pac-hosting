@@ -50,24 +50,31 @@ check_prerequisites() {
 # Initialize Terraform
 init_terraform() {
     print_status "Initializing Terraform..."
+    cd terraform
     terraform init
+    cd ..
 }
 
 # Plan Terraform deployment
 plan_terraform() {
     print_status "Planning Terraform deployment..."
+    cd terraform
     terraform plan -out=tfplan
+    cd ..
 }
 
 # Apply Terraform deployment
 apply_terraform() {
     print_status "Applying Terraform deployment..."
+    cd terraform
     terraform apply tfplan
+    cd ..
 }
 
 # Get outputs
 get_outputs() {
     print_status "Getting deployment outputs..."
+    cd terraform
     
     RESOURCE_GROUP=$(terraform output -raw resource_group_name)
     ACR_NAME=$(terraform output -raw container_registry_name)
@@ -78,6 +85,8 @@ get_outputs() {
     echo "Container Registry: $ACR_NAME"
     echo "ACR Login Server: $ACR_LOGIN_SERVER"
     echo "Application URL: $APP_URL"
+    
+    cd ..
     
     # Export for use in other scripts
     export RESOURCE_GROUP
@@ -93,11 +102,9 @@ build_and_push() {
     # Login to ACR
     az acr login --name "$ACR_NAME"
     
-    # Build and push (need to go back to root directory)
-    cd ..
+    # Build and push
     docker build -t "$ACR_LOGIN_SERVER/pac-hosting-server:latest" .
     docker push "$ACR_LOGIN_SERVER/pac-hosting-server:latest"
-    cd deployment/terraform
 }
 
 # Update container app
@@ -135,7 +142,7 @@ test_deployment() {
 # Cleanup function
 cleanup() {
     print_warning "To destroy the infrastructure, run:"
-    echo "  terraform destroy"
+    echo "  cd terraform && terraform destroy"
 }
 
 # Main execution
@@ -182,7 +189,9 @@ main() {
             read -p "Are you sure you want to destroy everything? (y/N): " -n 1 -r
             echo
             if [[ $REPLY =~ ^[Yy]$ ]]; then
+                cd terraform
                 terraform destroy
+                cd ..
                 print_status "Infrastructure destroyed."
             else
                 print_status "Destroy cancelled."

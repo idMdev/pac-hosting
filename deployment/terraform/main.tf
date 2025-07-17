@@ -111,11 +111,6 @@ resource "azurerm_container_app" "main" {
         name  = "NODE_ENV"
         value = "production"
       }
-
-      env {
-        name  = "PORT"
-        value = "80"
-      }
     }
 
     min_replicas = 1
@@ -124,7 +119,7 @@ resource "azurerm_container_app" "main" {
 
   ingress {
     external_enabled = true
-    target_port      = 80
+    target_port      = 3000
     
     traffic_weight {
       percentage      = 100
