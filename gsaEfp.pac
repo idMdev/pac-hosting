@@ -106,6 +106,21 @@ function FindProxyForURL(url, host) {
   ];
   //----------------------End M365 FQDNs bypassed by EFP----------------------//
 
+  //----------------------Start CDN and Static Content Exclusions----------------------//
+  // Substrings in hostnames that typically indicate CDNs or static content
+  var bypassHostPatterns = [
+    "cdn", "static", "assets", "images", "img", "media", "fonts", "js", "css", "videos",
+    "akamai", "akamaized", "cloudfront", "fastly", "netdna", "stackpath", "cachefly",
+    "gstatic", "fbcdn", "azureedge", "cloudflare"
+  ];
+
+  // File extensions for common static assets
+  var staticExtensions = [
+    ".js", ".css", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico",
+    ".woff", ".woff2", ".ttf", ".eot", ".otf", ".mp4", ".webm", ".m4v"
+  ];
+  //----------------------End CDN and Static Content Exclusions----------------------//
+
   // Combine all mandatory exclusions (these ALWAYS bypass EFP regardless of mode)
   var mandatoryExclusions = []
     .concat(requiredAuth)
@@ -126,6 +141,22 @@ function FindProxyForURL(url, host) {
       if (dnsDomainIs(host, mandatoryExclusions[i])) {
         return "DIRECT";
       }
+    }
+  }
+
+  // Check for CDN and static content patterns (bypass proxy for performance)
+  // Bypass if hostname contains typical CDN/static keywords
+  for (var k = 0; k < bypassHostPatterns.length; k++) {
+    if (shExpMatch(host, "*" + bypassHostPatterns[k] + "*")) {
+      return "DIRECT";
+    }
+  }
+
+  // Bypass if the URL ends with known static file extensions
+  var lowerUrl = url.toLowerCase();
+  for (var l = 0; l < staticExtensions.length; l++) {
+    if (shExpMatch(lowerUrl, "*" + staticExtensions[l])) {
+      return "DIRECT";
     }
   }
 
