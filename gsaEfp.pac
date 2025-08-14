@@ -109,9 +109,9 @@ function FindProxyForURL(url, host) {
   //----------------------Start CDN and Static Content Exclusions----------------------//
   // Substrings in hostnames that typically indicate CDNs or static content
   var bypassHostPatterns = [
-    "cdn", "static", "assets", "images", "img", "media", "fonts", "js", "css", "videos",
+    "cdn", "static", "assets", "images", "image", "img", "media", "fonts", "js", "css", "videos",
     "akamai", "akamaized", "cloudfront", "fastly", "netdna", "stackpath", "cachefly",
-    "gstatic", "fbcdn", "azureedge", "cloudflare"
+    "gstatic", "fbcdn", "azureedge", "cloudflare","api.","cdp","demdex","taboola"
   ];
 
   // File extensions for common static assets
@@ -152,10 +152,15 @@ function FindProxyForURL(url, host) {
     }
   }
 
-  // Bypass if the URL ends with known static file extensions
+  // Bypass if the URL ends with known static file extensions (including query strings)
   var lowerUrl = url.toLowerCase();
   for (var l = 0; l < staticExtensions.length; l++) {
+    // Check for extension at end of URL
     if (shExpMatch(lowerUrl, "*" + staticExtensions[l])) {
+      return "DIRECT";
+    }
+    // Check for extension followed by query string (?)
+    if (shExpMatch(lowerUrl, "*" + staticExtensions[l] + "?*")) {
       return "DIRECT";
     }
   }
