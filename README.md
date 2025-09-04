@@ -64,12 +64,6 @@ A containerized web server that hosts dynamically generated PAC (Proxy Auto-Conf
    http://localhost:3000/your-tenant-guid
    ```
 
-   Or with beta edge endpoint:
-
-   ```text
-   http://localhost:3000/your-tenant-guid?betaEdge=true
-   ```
-
 ## API Endpoints
 
 ### GET /{tenantId}
@@ -80,15 +74,11 @@ Generates and returns a PAC file with the specified tenant ID.
 
 - `tenantId` (required): A valid GUID representing the tenant ID
 
-**Query Parameters:**
-
-- `betaEdge` (optional): Set to "true" to use the beta edge endpoint (efp.ztna.azureedge-test.net)
-
 **Examples:**
 
 ```text
-GET /beee99f9-ff92-4b15-bddd-652c8204f79f
-GET /beee99f9-ff92-4b15-bddd-652c8204f79f?betaEdge=true
+GET /beee99f9-ff92-4b15-bddd-652c82ffffff
+
 ```
 
 **Response:**
