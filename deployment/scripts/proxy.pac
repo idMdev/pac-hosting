@@ -5,7 +5,7 @@ function FindProxyForURL(url, host) {
   var efpUrl = "HTTPS " + tenantId + "." + efpEndpoint;
 
   // Dynamic PAC file host (will be replaced by server based on request Host header)
-  var pacFileRequestHost = "DYNAMIC_PAC_HOST_PLACEHOLDER";
+  var pacFileRequestHost = "pac.azureidentity.us";
 
   // CRITICAL: Always exclude PAC file requests to prevent infinite loops
   // This should be the first check to ensure PAC file retrieval never goes through proxy
@@ -43,18 +43,16 @@ function FindProxyForURL(url, host) {
   //----------------------Start Authentication FQDNs bypassed by EFP----------------------//
   //CRITICAL: DO NOT MODIFY Entra ID Authentication URLs. These must be bypassed for EFP to work correctly.
   var requiredAuth = [
-    "*.auth.microsoft.com",
-    "*.msftidentity.com",
-    "*.msidentity.com",
-    "*.microsoftonline.com",
+    "login.microsoftonline.com",
     "login.microsoft.com",
     "login.windows.net",
     "login.microsoftonline-p.com",
+    "loginex.microsoftonline.com",
+    "login-us.microsoftonline.com",
     "login.live.com",
-    "*.msftauth.net",
-    "*.msauth.net",
-    "*.msecdn.net",
-    "*.msftauthimages.net"
+    "aadcdn.msftauth.net",
+    "msftauth.net",
+    "aadcdn.msauth.net"
   ];
 
   //IMPORTANT: If you are using a federated identity provider with Entra ID, you may need to add additional domains here.
@@ -108,6 +106,21 @@ function FindProxyForURL(url, host) {
   ];
   //----------------------End M365 FQDNs bypassed by EFP----------------------//
 
+  //----------------------Start CDN and Static Content Exclusions----------------------//
+  // Substrings in hostnames that typically indicate CDNs or static content
+  //var bypassHostPatterns = [
+  //  "cdn", "static", "assets", "images", "image", "img", "media", "fonts", "js", "css", "videos",
+  //  "akamai", "akamaized", "cloudfront", "fastly", "netdna", "stackpath", "cachefly",
+  //  "gstatic", "fbcdn", "azureedge", "cloudflare","api.","cdp","demdex","taboola"
+  //];
+
+  // File extensions for common static assets
+  //var staticExtensions = [
+  //  ".js", ".css", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".ico",
+  //  ".woff", ".woff2", ".ttf", ".eot", ".otf", ".mp4", ".webm", ".m4v"
+  //];
+  //----------------------End CDN and Static Content Exclusions----------------------//
+
   // Combine all mandatory exclusions (these ALWAYS bypass EFP regardless of mode)
   var mandatoryExclusions = []
     .concat(requiredAuth)
@@ -130,6 +143,27 @@ function FindProxyForURL(url, host) {
       }
     }
   }
+
+  // Check for CDN and static content patterns (bypass proxy for performance)
+  // Bypass if hostname contains typical CDN/static keywords
+  //for (var k = 0; k < bypassHostPatterns.length; k++) {
+  //  if (shExpMatch(host, "*" + bypassHostPatterns[k] + "*")) {
+  //    return "DIRECT";
+  //  }
+  //}
+
+  // Bypass if the URL ends with known static file extensions (including query strings)
+  //var lowerUrl = url.toLowerCase();
+  //for (var l = 0; l < staticExtensions.length; l++) {
+    // Check for extension at end of URL
+  //  if (shExpMatch(lowerUrl, "*" + staticExtensions[l])) {
+  //    return "DIRECT";
+   // }
+    // Check for extension followed by query string (?)
+   // if (shExpMatch(lowerUrl, "*" + staticExtensions[l] + "?*")) {
+    //  return "DIRECT";
+    //}
+  //}
 
   // Check redirect URL for auth (must go through EFP)
   if (dnsDomainIs(host, "ia.auth.globalsecureaccess.microsoft.com")) {

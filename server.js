@@ -16,7 +16,7 @@ app.get('/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// Certificate endpoint
+// Certificate endpoint - EfpTestCN
 app.get('/certs/EfpTestCN.crt', (req, res) => {
   try {
     const certPath = path.join(__dirname, 'EfpTestCN.crt');
@@ -34,6 +34,36 @@ app.get('/certs/EfpTestCN.crt', (req, res) => {
     // Set appropriate headers for certificate file
     res.setHeader('Content-Type', 'application/x-x509-ca-cert');
     res.setHeader('Content-Disposition', 'attachment; filename="EfpTestCN.crt"');
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    
+    res.send(certContent);
+    
+  } catch (error) {
+    console.error('Error serving certificate file:', error);
+    res.status(500).json({ 
+      error: 'Internal server error while serving certificate file' 
+    });
+  }
+});
+
+// Certificate endpoint - AzureIdentity.Us
+app.get('/certs/AzureIdentity.Us.crt', (req, res) => {
+  try {
+    const certPath = path.join(__dirname, 'azureidentity.us.crt');
+    
+    // Check if certificate file exists
+    if (!fs.existsSync(certPath)) {
+      return res.status(404).json({ 
+        error: 'Certificate file not found' 
+      });
+    }
+    
+    // Read and serve the certificate file
+    const certContent = fs.readFileSync(certPath, 'utf8');
+    
+    // Set appropriate headers for certificate file
+    res.setHeader('Content-Type', 'application/x-x509-ca-cert');
+    res.setHeader('Content-Disposition', 'attachment; filename="AzureIdentity.Us.crt"');
     res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
     
     res.send(certContent);
