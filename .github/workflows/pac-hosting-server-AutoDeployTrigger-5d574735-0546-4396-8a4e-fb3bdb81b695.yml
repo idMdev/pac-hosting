@@ -1,0 +1,49 @@
+name: Trigger auto deployment for pac-hosting-server
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - '**'
+    - '.github/workflows/pac-hosting-server-AutoDeployTrigger-5d574735-0546-4396-8a4e-fb3bdb81b695.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.PACHOSTINGSERVER_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.PACHOSTINGSERVER_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.PACHOSTINGSERVER_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          _targetLabelKey_: _targetLabel_
+          registryUrl: pachostingacr1752701366.azurecr.io
+          registryUsername: ${{ secrets.PACHOSTINGSERVER_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.PACHOSTINGSERVER_REGISTRY_PASSWORD }}
+          containerAppName: pac-hosting-server
+          resourceGroup: pac-hosting-rg
+          imageToBuild: pachostingacr1752701366.azurecr.io/pac-hosting-server:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
