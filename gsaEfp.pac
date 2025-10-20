@@ -19,7 +19,6 @@ function FindProxyForURL(url, host) {
   var ALL_PROXY_MODE = true;
   //----------------------PROXY MODE CONFIGURATION----------------------//
 
-
   //----------------------Start Admin-Defined Proxy Domains----------------------//
   // Domains that MUST go through EFP (for SOME_PROXY_MODE)
   var customInclusions = [
@@ -54,7 +53,8 @@ function FindProxyForURL(url, host) {
     "*.msftauth.net",
     "*.msauth.net",
     "*.msecdn.net",
-    "*.msftauthimages.net"
+    "*.msftauthimages.net",
+    "*.access.mcas.ms" //Required to fix the Microsoft Defender for Cloud Apps session control (when applied to the EFP service principal using a Conditional Access Policy)
   ];
 
   //IMPORTANT: If you are using a federated identity provider with Entra ID, you may need to add additional domains here.
@@ -64,6 +64,7 @@ function FindProxyForURL(url, host) {
     // "sso.yourdomain.com",
     // "idp.yourdomain.com"
   ];
+
   //----------------------End Authentication FQDNs bypassed by EFP----------------------//
 
   //----------------------Start M365 FQDNs bypassed by EFP----------------------//
