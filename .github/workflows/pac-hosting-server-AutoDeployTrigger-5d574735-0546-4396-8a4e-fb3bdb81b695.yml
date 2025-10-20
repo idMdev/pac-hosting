@@ -9,6 +9,11 @@ on:
     paths:
     - '**'
     - '.github/workflows/pac-hosting-server-AutoDeployTrigger-5d574735-0546-4396-8a4e-fb3bdb81b695.yml'
+    paths-ignore:
+      - 'deployment/**'
+      - 'terraform/**'
+      - 'scripts/**'
+      - '*.md'
 
   # Allow manual trigger 
   workflow_dispatch:      
@@ -74,6 +79,7 @@ jobs:
           imageToBuild: pachostingacr1752701366.azurecr.io/pac-hosting-server:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
+
 
 
 
