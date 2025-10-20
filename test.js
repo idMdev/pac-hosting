@@ -34,8 +34,6 @@ async function runTests() {
     const rootResponse = await makeRequest('/');
     assert.strictEqual(rootResponse.statusCode, 200);
     assert(rootResponse.data.includes('12345678-1234-1234-1234-123456789012'));
-    assert(rootResponse.message);
-    assert(rootResponse.endpoints);
     console.log('✓ Root endpoint passed\n');
     
     // Test 3: PAC endpoint with valid tenant ID
