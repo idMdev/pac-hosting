@@ -33,7 +33,7 @@ async function runTests() {
     console.log('Test 2: Root endpoint');
     const rootResponse = await makeRequest('/');
     assert.strictEqual(rootResponse.statusCode, 200);
-    const rootData = JSON.parse(rootResponse.data);
+    assert(rootResponse.data.includes('12345678-1234-1234-1234-123456789012'));
     assert(rootData.message);
     assert(rootData.endpoints);
     console.log('✓ Root endpoint passed\n');
