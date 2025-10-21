@@ -1,0 +1,74 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - nodejs
+  - npm
+  - nginx
+  - git
+
+write_files:
+  - path: /etc/systemd/system/pac-hosting.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=PAC Hosting Server
+      After=network.target
+
+      [Service]
+      Type=simple
+      User=azureuser
+      WorkingDirectory=/opt/pac-hosting
+      ExecStart=/usr/bin/node /opt/pac-hosting/server.js
+      Restart=on-failure
+      RestartSec=10
+      StandardOutput=syslog
+      StandardError=syslog
+      SyslogIdentifier=pac-hosting
+      Environment=NODE_ENV=production
+      Environment=PORT=3000
+
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: /etc/nginx/sites-available/pac-hosting
+    permissions: '0644'
+    content: |
+      server {
+          listen 80;
+          server_name _;
+
+          # Security headers
+          add_header X-Frame-Options "SAMEORIGIN" always;
+          add_header X-Content-Type-Options "nosniff" always;
+          add_header X-XSS-Protection "1; mode=block" always;
+
+          location / {
+              proxy_pass http://localhost:3000;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection 'upgrade';
+              proxy_set_header Host $host;
+              proxy_cache_bypass $http_upgrade;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+          }
+
+          # Health check endpoint
+          location /health {
+              proxy_pass http://localhost:3000/health;
+              access_log off;
+          }
+      }
+
+runcmd:
+  - mkdir -p /opt/pac-hosting
+  - chown azureuser:azureuser /opt/pac-hosting
+  - systemctl daemon-reload
+  - systemctl enable pac-hosting
+  - ln -sf /etc/nginx/sites-available/pac-hosting /etc/nginx/sites-enabled/
+  - rm -f /etc/nginx/sites-enabled/default
+  - systemctl restart nginx
+  - systemctl enable nginx

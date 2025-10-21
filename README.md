@@ -204,26 +204,32 @@ spec:
 
 ## Azure Deployment 🚀
 
-Deploy to Azure Container Apps with one command:
+Deploy to Azure with multiple options:
 
 ```bash
-# Quick deployment
+# Quick deployment to Container Apps
 ./deployment/scripts/deploy-azure.sh
 
+# Deploy to Azure VM with Managed Identity
+./deployment/scripts/deploy-azure-vm.sh
+
 # Or with Terraform
-cd deployment/terraform && ./deploy-terraform.sh deploy
+cd deployment/terraform && ./deploy-terraform.sh deploy-vm
 ```
 
 See [deployment/docs/QUICKSTART.md](deployment/docs/QUICKSTART.md) for detailed deployment instructions.
 
 ### Deployment Options
 
-1. **Azure Container Apps** (Recommended) - Serverless, auto-scaling
-2. **Azure Container Instances** - Simple container hosting
-3. **Azure App Service** - Traditional web app hosting
-4. **Terraform** - Infrastructure as Code
+1. **Azure Virtual Machine** (Recommended for managed identity integration) - Full control with managed identity
+2. **Azure Container Apps** - Serverless, auto-scaling
+3. **Azure Container Instances** - Simple container hosting
+4. **Azure App Service** - Traditional web app hosting
+5. **Terraform** - Infrastructure as Code
 
-Full deployment guide: [deployment/docs/AZURE_DEPLOYMENT.md](deployment/docs/AZURE_DEPLOYMENT.md)
+Full deployment guides:
+- VM Deployment: [deployment/docs/AZURE_VM_DEPLOYMENT.md](deployment/docs/AZURE_VM_DEPLOYMENT.md)
+- Container Deployment: [deployment/docs/AZURE_DEPLOYMENT.md](deployment/docs/AZURE_DEPLOYMENT.md)
 
 ## License
 
