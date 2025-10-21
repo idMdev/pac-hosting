@@ -54,7 +54,8 @@ function FindProxyForURL(url, host) {
     "*.msauth.net",
     "*.msecdn.net",
     "*.msftauthimages.net",
-    "*.access.mcas.ms" //Required to fix the Microsoft Defender for Cloud Apps session control (when applied to the EFP service principal using a Conditional Access Policy)
+    "*.termsofuse.identitygovernance.azure.com", //Required for Entra ID Terms of Use when such policies are configured
+    "*.access.mcas.ms" //Required for the Microsoft Defender for Cloud Apps session control (when applied to the EFP service principal using a Conditional Access Policy)
   ];
 
   //IMPORTANT: If you are using a federated identity provider with Entra ID, you may need to add additional domains here.
