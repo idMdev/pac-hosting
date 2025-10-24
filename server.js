@@ -255,11 +255,30 @@ app.get('/', (req, res) => {
 // Helper function to generate random 12-character unique ID using cryptographically secure random
 function generateUniqueId() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  const randomBytes = crypto.randomBytes(12);
+  const charsLength = chars.length;
+  // Generate extra bytes to minimize modulo bias
+  const randomBytes = crypto.randomBytes(24);
   let result = '';
-  for (let i = 0; i < 12; i++) {
-    result += chars.charAt(randomBytes[i] % chars.length);
+  let byteIndex = 0;
+  
+  while (result.length < 12 && byteIndex < randomBytes.length) {
+    const randomValue = randomBytes[byteIndex];
+    byteIndex++;
+    // Use rejection sampling to minimize bias
+    // 252 is the largest multiple of 36 that fits in a byte (252 = 36 * 7)
+    if (randomValue < 252) {
+      result += chars.charAt(randomValue % charsLength);
+    }
   }
+  
+  // Fallback in extremely unlikely case we don't have enough bytes
+  while (result.length < 12) {
+    const extraBytes = crypto.randomBytes(1);
+    if (extraBytes[0] < 252) {
+      result += chars.charAt(extraBytes[0] % charsLength);
+    }
+  }
+  
   return result;
 }
 
