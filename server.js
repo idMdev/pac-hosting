@@ -251,6 +251,65 @@ app.get('/', (req, res) => {
   res.send(htmlContent);
 });
 
+// Helper function to generate random 12-character unique ID
+function generateUniqueId() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 12; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
+// PAC file endpoint - serve on root with tenant ID and optional pinnedsession path
+app.get('/:tenantId/pinnedsession', (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    const { betaEdge } = req.query;
+    const requestHost = req.get('host') || req.get('Host') || 'localhost';
+    
+    // Validate tenant ID
+    if (!tenantId) {
+      return res.status(400).json({ 
+        error: 'Missing required path parameter: tenantId' 
+      });
+    }
+    
+    // Validate tenant ID format (basic GUID validation)
+    const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!guidRegex.test(tenantId)) {
+      return res.status(400).json({ 
+        error: 'Invalid tenant ID format. Must be a valid GUID.' 
+      });
+    }
+    
+    // Generate unique ID for pinned session
+    const uniqueId = generateUniqueId();
+    
+    // Read the PAC file template
+    const pacFilePath = path.join(__dirname, 'gsaEfp.pac');
+    const pacFileContent = fs.readFileSync(pacFilePath, 'utf8');
+    
+    // Replace the tenant ID, endpoint, and PAC file host in the PAC file with pinned session format
+    const updatedPacContent = replaceTenantIdAndEndpoint(pacFileContent, tenantId, betaEdge, requestHost, uniqueId);
+    
+    // Set appropriate headers for PAC file
+    res.setHeader('Content-Type', 'application/x-ns-proxy-autoconfig');
+    res.setHeader('Content-Disposition', `attachment; filename="proxy-${tenantId}-pinned.pac"`);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
+    res.send(updatedPacContent);
+    
+  } catch (error) {
+    console.error('Error serving PAC file:', error);
+    res.status(500).json({ 
+      error: 'Internal server error while generating PAC file' 
+    });
+  }
+});
+
 // PAC file endpoint - serve on root with tenant ID in path
 app.get('/:tenantId', (req, res) => {
   try {
@@ -298,10 +357,17 @@ app.get('/:tenantId', (req, res) => {
 });
 
 // Function to replace tenant ID and optionally endpoint in PAC file content
-function replaceTenantIdAndEndpoint(pacContent, newTenantId, betaEdge, requestHost) {
+function replaceTenantIdAndEndpoint(pacContent, newTenantId, betaEdge, requestHost, uniqueId) {
   // Replace the tenant ID in the variable declaration
   const tenantIdPattern = /var tenantId = "[^"]*";/;
-  const tenantIdReplacement = `var tenantId = "${newTenantId}";`;
+  let tenantIdReplacement;
+  
+  // If uniqueId is provided, use pinned session format
+  if (uniqueId) {
+    tenantIdReplacement = `var tenantId = "${newTenantId}_${uniqueId}";`;
+  } else {
+    tenantIdReplacement = `var tenantId = "${newTenantId}";`;
+  }
   
   let updatedContent = pacContent.replace(tenantIdPattern, tenantIdReplacement);
   

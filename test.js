@@ -69,6 +69,50 @@ async function runTests() {
     assert(pacBetaEdgeFalseResponse.data.includes(`var efpEndpoint = "internet.efp.globalsecureaccess.microsoft.com";`));
     console.log('✓ PAC endpoint with betaEdge=false passed\n');
     
+    // Test 7: Pinned session endpoint
+    console.log('Test 7: Pinned session endpoint');
+    const pinnedSessionResponse = await makeRequest(`/${TEST_TENANT_ID}/pinnedsession`);
+    assert.strictEqual(pinnedSessionResponse.statusCode, 200);
+    assert(pinnedSessionResponse.headers['content-type'].includes('application/x-ns-proxy-autoconfig'));
+    
+    // Extract tenant ID with unique ID
+    const tenantIdMatch = pinnedSessionResponse.data.match(/var tenantId = "([^"]+)";/);
+    assert(tenantIdMatch, 'Could not find tenantId in response');
+    const tenantIdWithUnique = tenantIdMatch[1];
+    
+    // Verify format: tenantId_uniqueId
+    assert(tenantIdWithUnique.startsWith(TEST_TENANT_ID + '_'), 'Tenant ID should start with original tenant ID and underscore');
+    
+    // Extract unique ID
+    const uniqueId = tenantIdWithUnique.substring(TEST_TENANT_ID.length + 1);
+    assert.strictEqual(uniqueId.length, 12, 'Unique ID should be 12 characters');
+    assert(/^[a-z0-9]+$/.test(uniqueId), 'Unique ID should only contain lowercase letters and numbers');
+    console.log(`✓ Pinned session endpoint passed (unique ID: ${uniqueId})\n`);
+    
+    // Test 8: Pinned session generates different unique IDs
+    console.log('Test 8: Pinned session generates different unique IDs for each request');
+    const pinnedSession1 = await makeRequest(`/${TEST_TENANT_ID}/pinnedsession`);
+    const pinnedSession2 = await makeRequest(`/${TEST_TENANT_ID}/pinnedsession`);
+    
+    const tenantId1Match = pinnedSession1.data.match(/var tenantId = "([^"]+)";/);
+    const tenantId2Match = pinnedSession2.data.match(/var tenantId = "([^"]+)";/);
+    
+    assert(tenantId1Match && tenantId2Match, 'Could not find tenantId in responses');
+    
+    const uniqueId1 = tenantId1Match[1].substring(TEST_TENANT_ID.length + 1);
+    const uniqueId2 = tenantId2Match[1].substring(TEST_TENANT_ID.length + 1);
+    
+    assert.notStrictEqual(uniqueId1, uniqueId2, 'Unique IDs should be different for each request');
+    console.log(`✓ Different unique IDs generated: ${uniqueId1} vs ${uniqueId2}\n`);
+    
+    // Test 9: Pinned session with invalid tenant ID
+    console.log('Test 9: Pinned session endpoint with invalid tenant ID (should fail)');
+    const pinnedInvalidResponse = await makeRequest('/invalid-guid/pinnedsession');
+    assert.strictEqual(pinnedInvalidResponse.statusCode, 400);
+    const pinnedInvalidErrorData = JSON.parse(pinnedInvalidResponse.data);
+    assert(pinnedInvalidErrorData.error.includes('Invalid tenant ID format'));
+    console.log('✓ Pinned session endpoint with invalid tenant ID properly rejected\n');
+    
     console.log('🎉 All tests passed!');
     
   } catch (error) {
