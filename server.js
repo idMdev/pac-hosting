@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -251,12 +252,13 @@ app.get('/', (req, res) => {
   res.send(htmlContent);
 });
 
-// Helper function to generate random 12-character unique ID
+// Helper function to generate random 12-character unique ID using cryptographically secure random
 function generateUniqueId() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const randomBytes = crypto.randomBytes(12);
   let result = '';
   for (let i = 0; i < 12; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += chars.charAt(randomBytes[i] % chars.length);
   }
   return result;
 }
@@ -295,6 +297,7 @@ app.get('/:tenantId/pinnedsession', (req, res) => {
     
     // Set appropriate headers for PAC file
     res.setHeader('Content-Type', 'application/x-ns-proxy-autoconfig');
+    // Tenant ID is already validated as GUID format, safe to use in filename
     res.setHeader('Content-Disposition', `attachment; filename="proxy-${tenantId}-pinned.pac"`);
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -341,6 +344,7 @@ app.get('/:tenantId', (req, res) => {
     
     // Set appropriate headers for PAC file
     res.setHeader('Content-Type', 'application/x-ns-proxy-autoconfig');
+    // Tenant ID is already validated as GUID format, safe to use in filename
     res.setHeader('Content-Disposition', `attachment; filename="proxy-${tenantId}.pac"`);
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
