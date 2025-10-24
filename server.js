@@ -272,10 +272,16 @@ function generateUniqueId() {
   }
   
   // Fallback in extremely unlikely case we don't have enough bytes
-  while (result.length < 12) {
-    const extraBytes = crypto.randomBytes(1);
-    if (extraBytes[0] < 252) {
-      result += chars.charAt(extraBytes[0] % charsLength);
+  // Add a safety limit to prevent theoretical infinite loop
+  let attempts = 0;
+  const maxAttempts = 100;
+  while (result.length < 12 && attempts < maxAttempts) {
+    attempts++;
+    const extraBytes = crypto.randomBytes(12); // Generate multiple bytes at once for efficiency
+    for (let i = 0; i < extraBytes.length && result.length < 12; i++) {
+      if (extraBytes[i] < 252) {
+        result += chars.charAt(extraBytes[i] % charsLength);
+      }
     }
   }
   
