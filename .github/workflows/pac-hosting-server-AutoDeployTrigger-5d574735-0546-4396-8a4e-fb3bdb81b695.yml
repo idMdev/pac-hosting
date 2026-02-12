@@ -43,8 +43,9 @@ jobs:
         
         # Stop the server
         kill $SERVER_PID
-  build-and-deploy:
+  build-and-deploy-subscription1:
     runs-on: ubuntu-latest
+    needs: test
     permissions: 
       id-token: write #This is required for requesting the OIDC JWT Token
       contents: read #Required when GH token is used to authenticate with private repo
@@ -72,6 +73,39 @@ jobs:
           containerAppName: pac-hosting-server
           resourceGroup: pac-hosting-rg
           imageToBuild: pachostingacr1752701366.azurecr.io/pac-hosting-server:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+  build-and-deploy-subscription2:
+    runs-on: ubuntu-latest
+    needs: test
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.PACHOSTINGSERVER_AZURE_CLIENT_ID_SUB2 }}
+          tenant-id: ${{ secrets.PACHOSTINGSERVER_AZURE_TENANT_ID_SUB2 }}
+          subscription-id: ${{ secrets.PACHOSTINGSERVER_AZURE_SUBSCRIPTION_ID_SUB2 }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          _targetLabelKey_: _targetLabel_
+          registryUrl: ${{ secrets.PACHOSTINGSERVER_REGISTRY_URL_SUB2 }}
+          registryUsername: ${{ secrets.PACHOSTINGSERVER_REGISTRY_USERNAME_SUB2 }}
+          registryPassword: ${{ secrets.PACHOSTINGSERVER_REGISTRY_PASSWORD_SUB2 }}
+          containerAppName: ${{ secrets.PACHOSTINGSERVER_CONTAINER_APP_NAME_SUB2 }}
+          resourceGroup: ${{ secrets.PACHOSTINGSERVER_RESOURCE_GROUP_SUB2 }}
+          imageToBuild: ${{ secrets.PACHOSTINGSERVER_REGISTRY_URL_SUB2 }}/pac-hosting-server:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
 
