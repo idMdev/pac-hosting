@@ -113,6 +113,26 @@ async function runTests() {
     assert(pinnedInvalidErrorData.error.includes('Invalid tenant ID format'));
     console.log('✓ Pinned session endpoint with invalid tenant ID properly rejected\n');
     
+    // Test 10: Verify cache headers on pinned session endpoint
+    console.log('Test 10: Verify cache headers on pinned session endpoint');
+    const pinnedCacheResponse = await makeRequest(`/${TEST_TENANT_ID}/pinnedsession`);
+    assert.strictEqual(pinnedCacheResponse.statusCode, 200);
+    assert.strictEqual(pinnedCacheResponse.headers['cache-control'], 'public, max-age=43200');
+    assert.strictEqual(pinnedCacheResponse.headers['etag'], 'pac-v1');
+    assert.strictEqual(pinnedCacheResponse.headers['pragma'], undefined, 'Pragma header should not be present');
+    assert.strictEqual(pinnedCacheResponse.headers['expires'], undefined, 'Expires header should not be present');
+    console.log('✓ Pinned session cache headers are correct\n');
+    
+    // Test 11: Verify no-cache headers on regular endpoint
+    console.log('Test 11: Verify no-cache headers on regular endpoint');
+    const regularCacheResponse = await makeRequest(`/${TEST_TENANT_ID}`);
+    assert.strictEqual(regularCacheResponse.statusCode, 200);
+    assert.strictEqual(regularCacheResponse.headers['cache-control'], 'no-cache, no-store, must-revalidate');
+    assert.strictEqual(regularCacheResponse.headers['pragma'], 'no-cache');
+    assert.strictEqual(regularCacheResponse.headers['expires'], '0');
+    assert.notStrictEqual(regularCacheResponse.headers['etag'], 'pac-v1', 'Regular endpoint should not have the static pac-v1 ETag');
+    console.log('✓ Regular endpoint cache headers remain no-cache\n');
+    
     console.log('🎉 All tests passed!');
     
   } catch (error) {

@@ -324,9 +324,8 @@ app.get('/:tenantId/pinnedsession', (req, res) => {
     res.setHeader('Content-Type', 'application/x-ns-proxy-autoconfig');
     // Tenant ID is already validated as GUID format, safe to use in filename
     res.setHeader('Content-Disposition', `attachment; filename="proxy-${tenantId}-pinned.pac"`);
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    res.setHeader('Cache-Control', 'public, max-age=43200');
+    res.setHeader('ETag', 'pac-v1');
     
     res.send(updatedPacContent);
     
