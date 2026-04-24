@@ -107,7 +107,8 @@ function FindProxyForURL(url, host) {
     "skypemaprdsitus.trafficmanager.net",
     "*.keydelivery.mediaservices.windows.net",
     "*.streaming.mediaservices.windows.net",
-    "*.cloud.microsoft"
+    "*.cloud.microsoft",
+    "*.office.net"
   ];
   //----------------------End M365 FQDNs bypassed by EFP----------------------//
 
