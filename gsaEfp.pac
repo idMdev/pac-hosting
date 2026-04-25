@@ -1,11 +1,11 @@
 function FindProxyForURL(url, host) {
   // Update the TenantId with your own tenant (must be enrolled in the GSA EFP preview)
-  var tenantId = "beee99f9-ff92-4b15-bddd-652c8204f79f";
+  var tenantId = "12345678-1234-1234-1234-123456789012";
   var efpEndpoint = "internet.efp.globalsecureaccess.microsoft.com";
   var efpUrl = "HTTPS " + tenantId + "." + efpEndpoint;
 
   // Dynamic PAC file host (will be replaced by server based on request Host header)
-  var pacFileRequestHost = "DYNAMIC_PAC_HOST_PLACEHOLDER";
+  var pacFileRequestHost = "pac.azureidentity.us";
 
   // CRITICAL: Always exclude PAC file requests to prevent infinite loops
   // This should be the first check to ensure PAC file retrieval never goes through proxy
@@ -106,56 +106,56 @@ function FindProxyForURL(url, host) {
   ];
 
   var m365UnifiedDomains = [
-    *.cloud.microsoft,
-    *.cloud.microsoft,
-    *.usercontent.microsoft
+    "*.cloud.microsoft",
+    "*.cloud.microsoft",
+    "*.usercontent.microsoft"
   ];
 
   var m365Common = [
-    *.officeapps.live.com,
-    *.online.office.com,
-    office.live.com,
-    *.office.net,
-    *.onenote.com,
-    *.cdn.office.net,
-    ajax.aspnetcdn.com,
-    apis.live.net,
-    officeapps.live.com,
-    www.onedrive.com,
-    *.protection.office.com,
-    *.office365.com,
-    *.aadrm.com,
-    *.azurerms.com,
-    *.informationprotection.azure.com,
-    ecn.dev.virtualearth.net,
-    informationprotection.hosting.portal.azure.net,
-    *.sharepointonline.com,
-    o15.officeredir.microsoft.com,
-    officepreviewredir.microsoft.com,
-    officeredir.microsoft.com,
-    r.office.microsoft.com,
-    activation.sls.microsoft.com,
-    office15client.microsoft.com,
-    officeclient.microsoft.com,
-    cdn.odc.officeapps.live.com,
-    officecdn.microsoft.com,
-    officecdn.microsoft.com.edgesuite.net,
-    otelrules.azureedge.net,
-    ocos-office365-s2s.msedge.net,
-    *.acompli.net,
-    *.outlookmobile.com,
-    eus-www.sway-cdn.com,
-    eus-www.sway-extensions.com,
-    wus-www.sway-cdn.com,
-    wus-www.sway-extensions.com,
-    sway.com,
-    www.sway.com,
-    officespeech.platform.bing.com,
-    *.office.com,
-    www.microsoft365.com,
-    *.microsoftusercontent.com
-    cdn.odc.officeapps.live.com,
-    cdn.uci.officeapps.live.com
+    "*.officeapps.live.com",
+    "*.online.office.com",
+    "office.live.com",
+    "*.office.net",
+    "*.onenote.com",
+    "*.cdn.office.net",
+    "ajax.aspnetcdn.com",
+    "apis.live.net",
+    "officeapps.live.com",
+    "www.onedrive.com",
+    "*.protection.office.com",
+    "*.office365.com",
+    "*.aadrm.com",
+    "*.azurerms.com",
+    "*.informationprotection.azure.com",
+    "ecn.dev.virtualearth.net",
+    "informationprotection.hosting.portal.azure.net",
+    "*.sharepointonline.com",
+    "o15.officeredir.microsoft.com",
+    "officepreviewredir.microsoft.com",
+    "officeredir.microsoft.com",
+    "r.office.microsoft.com",
+    "activation.sls.microsoft.com",
+    "office15client.microsoft.com",
+    "officeclient.microsoft.com",
+    "cdn.odc.officeapps.live.com",
+    "officecdn.microsoft.com",
+    "officecdn.microsoft.com.edgesuite.net",
+    "otelrules.azureedge.net",
+    "ocos-office365-s2s.msedge.net",
+    "*.acompli.net",
+    "*.outlookmobile.com",
+    "eus-www.sway-cdn.com",
+    "eus-www.sway-extensions.com",
+    "wus-www.sway-cdn.com",
+    "wus-www.sway-extensions.com",
+    "sway.com",
+    "www.sway.com",
+    "officespeech.platform.bing.com",
+    "*.office.com",
+    "www.microsoft365.com",
+    "*.microsoftusercontent.com",
+    "cdn.odc.officeapps.live.com",
+    "cdn.uci.officeapps.live.com"
   ];
 
   //----------------------End M365 FQDNs bypassed by EFP----------------------//
