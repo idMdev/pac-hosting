@@ -1,10 +1,12 @@
 
-// Generate a single random string to be used for all PAC files
+// Static per-tenant identifiers. In production these come from the signed-in tenant context.
+const TENANT_GUID = '8f4e3c2a-5b1d-4f7e-9a6c-2d8e1b3f4a5c';
+const TENANT_PATH_TOKEN = 'k9x7m2qp';
+
 const generateRandomString = () => {
   return Math.random().toString(36).substring(2, 10);
 };
 
-// Store the random string globally for consistency
 let globalRandomString: string | null = null;
 
 export const getGlobalRandomString = (): string => {
@@ -15,8 +17,7 @@ export const getGlobalRandomString = (): string => {
 };
 
 export const generatePacFileUrl = (fileName: string): string => {
-  const randomString = getGlobalRandomString();
-  return `https://pac.gsa.microsoft.com/${randomString}/${fileName}`;
+  return `https://pac.gsa.microsoft.com/${TENANT_GUID}/${TENANT_PATH_TOKEN}/${fileName}`;
 };
 
 export const generateCleanFileName = (originalName: string): string => {
