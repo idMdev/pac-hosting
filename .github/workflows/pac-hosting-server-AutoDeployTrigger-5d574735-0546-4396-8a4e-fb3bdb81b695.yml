@@ -8,6 +8,7 @@ on:
       [ main ]
     paths:
     - '*'
+    - 'admin-ui/**'
     - '.github/workflows/pac-hosting-server-AutoDeployTrigger-5d574735-0546-4396-8a4e-fb3bdb81b695.yml'
 
   # Allow manual trigger 
@@ -108,7 +109,6 @@ jobs:
           imageToBuild: ${{ secrets.PACHOSTINGSERVER_REGISTRY_URL_SUB2 }}/pac-hosting-server:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
-
 
 
 

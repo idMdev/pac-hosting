@@ -3,8 +3,9 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
+// Built app is served by the Express server under /uxmockup
 export default defineConfig(({ mode }) => ({
+  base: "/uxmockup/",
   server: {
     host: "::",
     port: 8080,

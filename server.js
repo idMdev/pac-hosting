@@ -289,6 +289,23 @@ function generateUniqueId() {
 }
 
 // PAC file endpoint - serve on root with tenant ID and optional pinnedsession path
+
+// ---------------------------------------------------------------------------
+// /uxmockup — UX prototype for PAC file admin experience.
+// Served from admin-ui/dist (built by Vite). Mounted BEFORE the /:tenantId
+// route so the wildcard does not intercept these requests.
+// ---------------------------------------------------------------------------
+const uxMockupDir = path.join(__dirname, 'admin-ui', 'dist');
+if (fs.existsSync(uxMockupDir)) {
+  app.use('/uxmockup', express.static(uxMockupDir));
+  // SPA fallback for client-side routes under /uxmockup/*
+  app.get('/uxmockup/*', (req, res) => {
+    res.sendFile(path.join(uxMockupDir, 'index.html'));
+  });
+  console.log('UX mockup mounted at /uxmockup');
+} else {
+  console.warn('UX mockup dist folder not found at ' + uxMockupDir + ' — /uxmockup will return 404');
+}
 app.get('/:tenantId/pinnedsession', (req, res) => {
   try {
     const { tenantId } = req.params;
