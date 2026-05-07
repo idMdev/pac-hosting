@@ -45,7 +45,7 @@ const sidebarItems: SidebarItem[] = [
       { title: 'Traffic forwarding', icon: Globe, path: '/global-secure-access/traffic-forwarding' },
       { title: 'Client download', icon: Globe, path: '/global-secure-access/client-download' },
       { title: 'Remote networks', icon: Globe, path: '/global-secure-access/remote-networks' },
-      { title: 'Explicit Forward Proxy', icon: Router, path: '/global-secure-access/connectors/explicit-forward-proxy' }
+      { title: 'PAC Files', icon: Router, path: '/global-secure-access/connectors/explicit-forward-proxy' }
     ]
   }
 ];
@@ -129,3 +129,4 @@ const Sidebar: React.FC = () => {
 };
 
 export default Sidebar;
+
